@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ride-Hailing App — OO Design + Behavioral Patterns (Assignment)</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial;}
+    body{margin:0;padding:24px;background:#f6f8fb;color:#0b1220}
+    .container{max-width:1100px;margin:0 auto;background:white;padding:24px;border-radius:12px;box-shadow:0 6px 30px rgba(11,18,32,0.08)}
+    h1{margin:0 0 8px;font-size:22px}
+    h2{margin-top:20px;font-size:18px}
+    pre{background:#0b1220;color:#e6f0ff;padding:12px;border-radius:8px;overflow:auto}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:#fbfdff;border:1px solid #eef3fb;padding:12px;border-radius:8px}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #cbd6e6;background:#ffffff;cursor:pointer}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    code{background:#eef6ff;padding:2px 6px;border-radius:6px}
+    .log{background:#0f1720;color:#dff3ff;padding:10px;border-radius:8px;height:180px;overflow:auto;font-family:monospace}
+    ul{margin:6px 0 6px 18px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Ride-Hailing App — OO Design + Behavioral Patterns</h1>
+    <p>A single-file demo and assignment sheet. The design uses <strong>Observer</strong>, <strong>Strategy</strong>, and <strong>Command</strong> behavioral patterns to keep the system scalable and testable.</p>
+
+    <h2>Assignment Sheet</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Product Backlog</h3>
+        <ol>
+          <li>Core ride flow: request, accept/reject, start, complete.</li>
+          <li>Notifications system (real-time updates to riders/drivers).</li>
+          <li>Fare calculation with multiple strategies (normal, surge, discount).</li>
+          <li>Commands for ride operations (book/cancel/rate) and undo support.</li>
+          <li>Driver availability & matching service.</li>
+          <li>Analytics & surge engine, wallet integration, receipts.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Sprint Backlog (example)</h3>
+        <ul>
+          <li>Sprint 1: Basic ride request + driver accept + observer notifications.</li>
+          <li>Sprint 2: Strategy-based fare calculation + unit tests for strategies.</li>
+          <li>Sprint 3: Command pattern for ride operations + command unit tests.</li>
+          <li>Sprint 4: Scalability: separate microservices (matching, payments, notifications).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Increment</h2>
+    <p>Deliverable: A working JS simulation of the ride lifecycle, with pattern implementations and a simple UI allowing instructors to exercise scenarios. Include tests and README.</p>
+
+    <h2>Reflection</h2>
+    <p>Key trade-offs: single-process simulation vs distributed architecture. Using behavioral patterns keeps business logic modular and easy to replace — e.g. new fare strategies or notification channels.</p>
+
+    <h2>Design Overview (OO + Patterns)</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Core Classes (OO)</h3>
+        <ul>
+          <li><code>User</code> (abstract) — <code>Rider</code>, <code>Driver</code></li>
+          <li><code>Ride</code> — ride state, fare, driver/rider refs</li>
+          <li><code>RideManager</code> / <code>MatchingService</code></li>
+          <li><code>NotificationService</code> — subject in Observer</li>
+          <li><code>FareStrategy</code> interface & implementations</li>
+          <li><code>Command</code> objects (BookRideCommand, CancelRideCommand, RateRideCommand)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>How patterns map to requirements</h3>
+        <ul>
+          <li><strong>Observer:</strong> Riders observe a Ride or NotificationService. When driver accepts/cancels, observers update UI/notify user.</li>
+          <li><strong>Strategy:</strong> FareStrategy encapsulates pricing algorithms and is injected into Ride or FareCalculator.</li>
+          <li><strong>Command:</strong> Ride operations as commands allow undo, queuing, logging, and retrying (great for distributed messaging).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Interactive Simulation</h2>
+    <p>Use the controls to simulate a rider requesting a ride, driver acceptance/cancellation, and to switch fare strategies.</p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="controls">
+          <button id="btnRequest">Request Ride</button>
+          <button id="btnDriverAccept">Driver Accepts</button>
+          <button id="btnDriverCancel">Driver Cancels</button>
+          <button id="btnComplete">Complete Ride</button>
+          <button id="btnCancel">Cancel Ride (by Rider)</button>
+        </div>
+        <div style="margin-top:10px">
+          <label for="strategy">Fare Strategy:</label>
+          <select id="strategy">
+            <option value="normal">Normal Fare</option>
+            <option value="surge">Surge Pricing</option>
+            <option value="discount">Discount</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <h4>System Log</h4>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <h2>Implementation notes (JS) — patterns implemented inline</h2>
+    <pre id="snippet">// Open the page and use controls. The code implements Observer, Strategy and Command patterns in JS (see source for details).</pre>
+
+    <h2>Source (inline)</h2>
+    <pre><code>/*
+      - Observer: NotificationService has subscribe/notify. Rider registers to ride notifications.
+      - Strategy: FareStrategy objects (normal, surge, discount).
+      - Command: commands with execute(), undo() (undo optional) and logged to invoker.
+    */</code></pre>
+
+    <script>
+      // ---------- Utility log ----------
+      const logEl = document.getElementById('log');
+      function sysLog(txt){
+        const p = document.createElement('div');
+        p.textContent = new Date().toLocaleTimeString() + ' — ' + txt;
+        logEl.prepend(p);
+      }
+
+      // ---------- Observer Pattern: NotificationService ----------
+      class NotificationService {
+        constructor(){ this.subscribers = new Map(); }
+        subscribe(topic, subscriber){
+          if(!this.subscribers.has(topic)) this.subscribers.set(topic, new Set());
+          this.subscribers.get(topic).add(subscriber);
+        }
+        unsubscribe(topic, subscriber){
+          if(!this.subscribers.has(topic)) return;
+          this.subscribers.get(topic).delete(subscriber);
+        }
+        notify(topic, message){
+          const list = this.subscribers.get(topic);
+          if(!list) return;
+          for(const s of list) s.update(message);
+        }
+      }
+
+      // ---------- Observer: Rider (subscriber) ----------
+      class Rider {
+        constructor(id, name){ this.id=id; this.name=name; }
+        update(msg){ sysLog(`Rider ${this.name} received: ${msg}`); }
+      }
+
+      // ---------- Simple Driver class ----------
+      class Driver {
+        constructor(id, name){ this.id=id; this.name=name; }
+      }
+
+      // ---------- Strategy Pattern: Fare strategies ----------
+      class FareStrategy {
+        calculate(base, distanceKm, timeMin){ throw new Error('abstract'); }
+      }
+      class NormalFare extends FareStrategy{
+        calculate(base,distanceKm,timeMin){ return base + distanceKm*10 + timeMin*1; }
+      }
+      class SurgeFare extends FareStrategy{
+        constructor(surgeMultiplier=1.5){ super(); this.mult=surgeMultiplier }
+        calculate(base,distanceKm,timeMin){ return (base + distanceKm*10 + timeMin*1) * this.mult; }
+      }
+      class DiscountFare extends FareStrategy{
+        constructor(discount=0.2){ super(); this.discount=discount }
+        calculate(base,distanceKm,timeMin){ return (base + distanceKm*10 + timeMin*1) * (1-this.discount); }
+      }
+
+      // ---------- Command Pattern: Commands & Invoker ----------
+      class Command {
+        execute(){ throw new Error('abstract'); }
+        undo(){ /* optional */ }
+      }
+
+      class BookRideCommand extends Command{
+        constructor(manager, ride){ super(); this.manager=manager; this.ride=ride; }
+        execute(){ this.manager.bookRide(this.ride); }
+        undo(){ this.manager.cancelRide(this.ride.id, 'undo'); }
+      }
+
+      class CancelRideCommand extends Command{
+        constructor(manager, rideId, by='rider'){ super(); this.manager=manager; this.rideId=rideId; this.by=by }
+        execute(){ this.manager.cancelRide(this.rideId, this.by); }
+      }
+
+      class CompleteRideCommand extends Command{
+        constructor(manager, rideId){ super(); this.manager=manager; this.rideId=rideId }
+        execute(){ this.manager.completeRide(this.rideId); }
+      }
+
+      class CommandInvoker{
+        constructor(){ this.history = []; }
+        run(cmd){ cmd.execute(); this.history.push(cmd); }
+        undoLast(){ const c = this.history.pop(); if(c && typeof c.undo==='function') c.undo(); }
+      }
+
+      // ---------- Core Ride & Manager ----------
+      class Ride {
+        constructor(id, rider, origin, dest, baseFare=20, distanceKm=5, timeMin=12){
+          this.id=id; this.rider=rider; this.origin=origin; this.dest=dest; this.driver=null; this.state='Requested';
+          this.baseFare = baseFare; this.distanceKm=distanceKm; this.timeMin=timeMin; this.fare=0;
+        }
+      }
+
+      class RideManager{
+        constructor(notificationService){
+          this.notificationService = notificationService;
+          this.rides = new Map();
+          this.fareStrategy = new NormalFare();
+        }
+        setFareStrategy(s){ this.fareStrategy = s; sysLog('Fare strategy changed.'); }
+        bookRide(ride){
+          this.rides.set(ride.id, ride);
+          // Riders subscribe to ride:{id} topic
+          this.notificationService.subscribe(`ride:${ride.id}`, ride.rider);
+          sysLog(`Ride ${ride.id} requested by ${ride.rider.name}`);
+          // In a real system: match driver asynchronously
+        }
+        assignDriver(rideId, driver){
+          const r = this.rides.get(rideId); if(!r) return;
+          r.driver = driver; r.state='DriverAssigned';
+          this.notificationService.notify(`ride:${rideId}`, `Driver ${driver.name} assigned`);
+          sysLog(`Driver ${driver.name} assigned to ride ${rideId}`);
+        }
+        driverAccept(rideId, driver){
+          const r = this.rides.get(rideId); if(!r) return;
+          r.driver = driver; r.state='Accepted';
+          r.fare = this.fareStrategy.calculate(r.baseFare, r.distanceKm, r.timeMin);
+          this.notificationService.notify(`ride:${rideId}`, `Driver ${driver.name} accepted. Fare: ${r.fare.toFixed(2)}`);
+          sysLog(`Ride ${rideId} accepted by ${driver.name}. Fare computed: ${r.fare.toFixed(2)}`);
+        }
+        driverCancel(rideId, driver, reason=''){
+          const r = this.rides.get(rideId); if(!r) return;
+          r.state='DriverCancelled';
+          this.notificationService.notify(`ride:${rideId}`, `Driver ${driver.name} cancelled. ${reason}`);
+          sysLog(`Driver ${driver.name} cancelled ride ${rideId}`);
+        }
+        cancelRide(rideId, by='rider'){
+          const r = this.rides.get(rideId); if(!r) return;
+          r.state='Cancelled';
+          this.notificationService.notify(`ride:${rideId}`, `Ride cancelled by ${by}`);
+          sysLog(`Ride ${rideId} cancelled by ${by}`);
+        }
+        completeRide(rideId){
+          const r = this.rides.get(rideId); if(!r) return;
+          r.state='Completed';
+          this.notificationService.notify(`ride:${rideId}`, `Ride completed. Paid: ${r.fare.toFixed(2)}`);
+          sysLog(`Ride ${rideId} completed. Fare ${r.fare.toFixed(2)}`);
+        }
+      }
+
+      // ---------- Wiring up the demo ----------
+      const notifier = new NotificationService();
+      const manager = new RideManager(notifier);
+      const invoker = new CommandInvoker();
+
+      // Demo entities
+      const rider = new Rider('r1','Alice');
+      const driver = new Driver('d1','Bob');
+      let currentRide = null;
+
+      // UI elements
+      document.getElementById('btnRequest').addEventListener('click',()=>{
+        const id = 'ride:'+Date.now();
+        currentRide = new Ride(id, rider, 'Point A','Point B');
+        const cmd = new BookRideCommand(manager, currentRide);
+        invoker.run(cmd);
+      });
+
+      document.getElementById('btnDriverAccept').addEventListener('click',()=>{
+        if(!currentRide){ sysLog('No active ride.'); return; }
+        // assign then accept (simulate)
+        manager.assignDriver(currentRide.id, driver);
+        manager.driverAccept(currentRide.id, driver);
+      });
+
+      document.getElementById('btnDriverCancel').addEventListener('click',()=>{
+        if(!currentRide){ sysLog('No active ride.'); return; }
+        manager.driverCancel(currentRide.id, driver, 'unexpected issue');
+      });
+
+      document.getElementById('btnCancel').addEventListener('click',()=>{
+        if(!currentRide){ sysLog('No active ride.'); return; }
+        const cmd = new CancelRideCommand(manager, currentRide.id, 'rider');
+        invoker.run(cmd);
+      });
+
+      document.getElementById('btnComplete').addEventListener('click',()=>{
+        if(!currentRide){ sysLog('No active ride.'); return; }
+        const cmd = new CompleteRideCommand(manager, currentRide.id);
+        invoker.run(cmd);
+      });
+
+      document.getElementById('strategy').addEventListener('change',(e)=>{
+        const v=e.target.value;
+        if(v==='normal') manager.setFareStrategy(new NormalFare());
+        else if(v==='surge') manager.setFareStrategy(new SurgeFare(2.0));
+        else if(v==='discount') manager.setFareStrategy(new DiscountFare(0.3));
+      });
+
+      // initial hint
+      sysLog('Ready. Click "Request Ride" to start the scenario.');
+    </script>
+
+  </div>
+</body>
+</html>
